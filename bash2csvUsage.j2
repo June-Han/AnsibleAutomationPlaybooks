@@ -1,0 +1,17 @@
+{# Header #}
+{%- for i in range(CSVmountPcent_labels|count) -%}
+    {%- if i == (CSVmountPcent_labels|count)-1 -%}
+        {{ CSVmountPcent_labels[i] }},UptimeInformation,CSVdatetime,CSVpkgInstalled 
+    {%- else -%}
+        {{ CSVmountPcent_labels[i] }},
+    {%- endif -%}
+{%- endfor %}
+
+{# Rows #}
+{%- for j in range(CSVmountPcent|count) -%}
+    {%- if j == (CSVmountPcent|count)-1 -%}
+        {{ CSVmountPcent[j] }},{{ CSVuptime }},{{ CSVdatetime }},{{ CSVpkgInstalled }}
+    {%- else -%}
+        {{ CSVmountPcent[j] }},
+    {%- endif -%}
+{%- endfor%}

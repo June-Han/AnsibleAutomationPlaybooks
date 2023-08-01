@@ -1,0 +1,47 @@
+---
+- name: Create Directory and backup
+  hosts: test
+  become: true
+  vars: 
+    BackupDate: "{{ ansible_date_time.date }}_{{ ansible_date_time.time }}"
+    LocalProjectDir: "/home/junehan/Documents/github/AnsiblePlaybookOSbackup/"
+    VMDestDir: "/home/juhan/Documents/"
+    FileDir: "{{ VMDestDir }}{{ BackupDate }}"
+    contents: "{{ lookup('file', ) }}"
+
+  tasks:
+    - name: Trying datetime
+      ansible.builtin.debug:
+        var: ansible_date_time
+
+    - name: ISO8601
+      ansible.builtin.debug:
+        var: ansible_date_time.iso8601
+
+    - name: Datetime format for directory
+      ansible.builtin.debug:
+        var: BackupDate
+
+    - name: Create a directory on the VM
+      ansible.builtin.file:
+        path: "{{ FileDir }}"
+        state: directory
+
+    - name: Create a yaml file for back up
+      ansible.builtin.file:
+        path: "{{ FileDir }}/sysctlBackup.yml"
+        state: touch
+
+    - name: Use a command line to try
+      command: "sysctl -a"
+      register: sysctl_content
+
+    - name: print out the debug sysctl contents
+      ansible.builtin.debug:
+        msg : "{{ sysctl_content.stdout }}"
+
+    - name: Loop over lines in a variable
+      ansible.builtin.lineinfile:
+        path: "{{ FileDir }}/sysctlBackup.yml"
+        line: "{{ item }}"
+      with_lines: sysctl -a

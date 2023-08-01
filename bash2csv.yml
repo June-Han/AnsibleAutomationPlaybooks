@@ -1,0 +1,81 @@
+---
+- name: Getting information to CSV
+  hosts: test
+  become: true
+
+  vars:
+    mountpointvar: /
+    csvDest: /home/juhan/Documents/Info.csv
+    pkgCheck: 'yum'
+    CSVpkgInstalled: "{{ pkgCheck }} is not installed"
+
+  tasks:
+    - name: Getting information for uptime
+      command: "uptime"
+      register: uptimeVar
+
+    - name: Print out uptime variable data
+      ansible.builtin.debug:
+        msg: "{{uptimeVar}}"
+
+    - name: Change Variable uptime (Remove commas)
+      ansible.builtin.set_fact:
+        CSVuptime: "{{ uptimeVar.stdout.strip() | regex_replace(',','')}}"
+
+    - name: Print out uptime variable
+      ansible.builtin.debug:
+        msg: "{{CSVuptime}}"
+
+    - name: Change Variable datetime (formatting)
+      ansible.builtin.set_fact:
+        CSVdatetime: "date {{ ansible_date_time.iso8601 | regex_replace('T', ' ' )}}"
+
+    - name: Get information for datetime
+      ansible.builtin.debug:
+        msg: "{{CSVdatetime}}"
+
+    - name: Mountpoint usage percentage data
+      command: "df -hP {{mountpointvar}}"
+      register: usagePercentage
+
+    - name: Mountpoint usage formatting labels
+      ansible.builtin.set_fact:
+        CSVmountPcent_labels: "{{usagePercentage.stdout_lines[0] | regex_replace(' +', '_') | split('_') }}"
+
+    - name: Mountpoint usage formatting
+      ansible.builtin.set_fact:
+        CSVmountPcent: "{{usagePercentage.stdout_lines[1] | regex_replace(' +', '_') | split('_') }}"
+
+    - name: Warning if mountpoint usage > 80
+      ansible.builtin.debug:
+        msg: "Warning: Mountpoint {{CSVmountPcent[5]}} at usage {{CSVmountPcent[4]}}"
+      when: " CSVmountPcent[4].replace('%','') | int >= 10"
+
+    - name: Gather the package facts
+      ansible.builtin.package_facts:
+        manager: auto
+
+    - name: Check and store status of the installed package
+      ansible.builtin.set_fact:
+        CSVpkgInstalled: "{{ pkgCheck }} is installed"
+      when: "pkgCheck in ansible_facts.packages"
+
+    - name: Check whether a package called yum is installed
+      ansible.builtin.debug:
+        msg: "{{ ansible_facts.packages['yum'] | length }} versions of yum is/are installed!"
+      when: "'yum' in ansible_facts.packages"
+
+    - name: Create CSV Spreadsheet
+      file:
+        path: "{{ csvDest }}"
+        state: absent
+
+    - name: Creating CSV contents
+      ansible.builtin.set_fact:
+        CSVtemp: "Uptime: {{CSVuptime}}\n\nDatetime: {{CSVdatetime}}\n\nUsage: \n{{ usagePercentage.stdout_lines[0] }}\n{{ usagePercentage.stdout_lines[1] }}\n\nCheck Package: {{CSVpkgInstalled}}"
+    
+    - name: Write lines to CSV
+      ansible.builtin.lineinfile:
+        dest: "{{ csvDest }}"
+        line: "{{ CSVtemp }}"
+        create: yes

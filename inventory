@@ -1,0 +1,5 @@
+[test]
+192.168.124.120 ansible_user=root ansible_ssh_pass=password
+
+[localhost]
+192.168.50.162 ansible_connection=local
