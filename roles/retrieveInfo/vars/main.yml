@@ -1,0 +1,6 @@
+---
+# vars file for roles/retrieveInfo
+mountpointvar: /
+csvDest: /home/juhan/Documents/Info.csv
+pkgCheck: 'yum'
+CSVpkgInstalled: "{{ pkgCheck }} is not installed"

@@ -1,0 +1,6 @@
+---
+- name: Getting information to CSV
+  hosts: test
+  become: true
+  roles:
+    - retrieveInfo
